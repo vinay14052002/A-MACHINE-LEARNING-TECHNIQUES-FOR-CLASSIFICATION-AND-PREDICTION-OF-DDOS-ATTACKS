@@ -1,0 +1,118 @@
+import warnings
+warnings.filterwarnings('ignore')
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score,classification_report,confusion_matrix
+df=pd.read_csv('kddcup99_csv.csv')
+df.shape
+df.head()
+df.columns
+df.info()
+df.isna().sum()
+print('Data set:')
+for col_name in df.columns:
+    if df[col_name].dtypes == 'object' :
+        unique_cat = len(df[col_name].unique())
+        print("Feature '{col_name}' has {unique_cat} categories".format(col_name=col_name, unique_cat=unique_cat))
+
+print()
+print('Distribution of categories in service:')
+print(df['service'].value_counts().sort_values(ascending=False).head())
+from sklearn import preprocessing
+lab=preprocessing.LabelEncoder()
+df['protocol_type']=lab.fit_transform(df['protocol_type'])
+df['service']=lab.fit_transform(df['service'])
+df['flag']=lab.fit_transform(df['flag'])
+df.head()
+df.info()
+df1=df['label']
+print('Label distribution Training set:')
+print(df['label'].value_counts())
+newdf=df1.replace({'normal':0,'smurf':1,'neptune':1,'back':1,'satan':2,'ipsweep':2,'portsweep':2,'warezclient': 2,'teardrop': 1,
+                  'pod': 1,'nmap' : 2,'guess_passwd': 2,'buffer_overflow': 2,'land': 1,'warezmaster': 2,'imap': 2,'rootkit': 2,
+                  'loadmodule': 2,'ftp_write': 2,'multihop': 2,'phf': 2,'perl': 2,'spy': 2})
+print(newdf.head())
+
+df['label'] = newdf
+df.head()
+df.info()
+df.to_csv('New_Data.csv')
+data = pd.read_csv("New_Data.csv")
+sns.countplot(x='label',data=data)
+X = data.iloc[:,data.columns!='label'] 
+y = data.iloc[:,data.columns=='label']   
+x = X.iloc[76138,:]
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn.ensemble import RandomForestClassifier
+xtrain, xtest, ytrain, ytest=train_test_split(X, y, test_size=0.33)
+rf=RandomForestClassifier()
+rf.fit(xtrain,ytrain)
+rf_ypre=rf.predict(xtest)
+model1=accuracy_score(rf_ypre,ytest)
+model1
+RF_CNF = confusion_matrix(ytest,rf_ypre, normalize = "true")
+print(RF_CNF)
+labels = ['0','1','2']
+sns.heatmap(RF_CNF, annot=True, cmap="YlGnBu", fmt=".3f", xticklabels=labels, yticklabels=labels)
+plt.show()
+from sklearn import metrics
+from sklearn.metrics import confusion_matrix
+from sklearn import svm
+support = svm.LinearSVC(random_state=20)
+support.fit(xtrain,ytrain)
+svm_ypre = support.predict(xtest)
+model2=metrics.accuracy_score(ytest,svm_ypre)
+print(model2)
+Svm_CNF = confusion_matrix(ytest,svm_ypre, normalize = "true")
+print(Svm_CNF)
+labels = ['0','1','2']
+sns.heatmap(confusion_matrix(ytest,svm_ypre, normalize = "true"), annot=True, cmap="YlGnBu", fmt=".3f", xticklabels=labels, yticklabels=labels)
+plt.show()
+from sklearn.naive_bayes import GaussianNB
+nb = GaussianNB()
+nb.fit(xtrain,ytrain)
+nb_ypred = nb.predict(xtest)
+nb_ypred
+model3 = accuracy_score(nb_ypred,ytest)
+labels = ['0','1','2']
+sns.heatmap(confusion_matrix(ytest,nb_ypred, normalize = "true"), annot=True, cmap="YlGnBu", fmt=".3f", xticklabels=labels, yticklabels=labels)
+plt.show()
+from sklearn.tree import DecisionTreeClassifier
+dt = DecisionTreeClassifier()
+dt.fit(xtrain,ytrain)
+dt_ypred = dt.predict(xtest)
+model4 = accuracy_score(dt_ypred, ytest)
+model4
+labels = ['0','1','2']
+sns.heatmap(confusion_matrix(ytest,dt_ypred, normalize = "true"), annot=True, cmap="YlGnBu", fmt=".3f", xticklabels=labels, yticklabels=labels)
+plt.show()
+import matplotlib.pyplot as plt; plt.rcdefaults()
+import numpy as np
+import matplotlib.pyplot as plt
+
+objects = ('RF','SVM', 'NB','DT')
+
+performance = [model1,model2,model3,model4]
+y_pos = np.arange(len(objects))
+
+fig, ax = plt.subplots()
+ax.set_ylabel('Accuracy Score')
+ax.set_xticks(y_pos)
+ax.set_xticklabels(objects)
+width = 0.5
+
+pps = ax.bar(y_pos - width/2, performance, width, label='performance')
+for p in pps:
+    height = p.get_height()
+    height = float("{0:.5f}".format(height))
+    ax.annotate('{}'.format(height),
+      xy=(p.get_x() + p.get_width() / 2, height),
+      xytext=(0, 1),
+      textcoords="offset points",
+      ha='center', va='bottom')
+plt.show()
+plt.savefig('algorithmcomaprision.png')
